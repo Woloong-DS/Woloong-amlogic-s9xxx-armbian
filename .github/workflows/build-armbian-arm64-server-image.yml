@@ -6,6 +6,8 @@
 name: Build Armbian arm64 server image
 
 on:
+  schedule:  # 定时检查内核仓库是否有新内核（有才编译镜像）
+    - cron: "0 20 * * *"  # 每天 20:00 UTC = 次日 04:00（北京时间）
   repository_dispatch:
   workflow_dispatch:
     inputs:
@@ -340,7 +342,54 @@ env:
   ROOTFS_SCRIPT: compile-kernel/tools/script/docker/build_armbian_rootfs_file.sh
 
 jobs:
+  check:  # 新增：定时检查 Woloong-kernel 是否有比上次镜像更新的内核，没有就跳过整轮构建
+    runs-on: ubuntu-latest  # 轻量任务，检查只需几秒
+    outputs:
+      build: ${{ steps.chk.outputs.build }}
+      kernel: ${{ steps.chk.outputs.kernel }}
+    steps:
+      - name: Check for newer kernel in Woloong-kernel
+        id: chk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          # 非定时触发（手动 / API）一律直接构建
+          if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "触发方式=${GITHUB_EVENT_NAME}（非定时），直接执行构建。"
+            echo "build=true" >> "${GITHUB_OUTPUT}"
+            echo "kernel=" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          kr_line="${{ inputs.armbian_kernel || '6.18.y' }}"
+          kr_line="${kr_line%%_*}"
+          verpatch="$(echo "${kr_line}" | awk -F. '{print $1"."$2}')"
+          kernel_repo="${{ inputs.kernel_repo || 'Woloong-DS/Woloong-kernel' }}"
+          kernel_usage="${{ inputs.kernel_usage || 'stable' }}"
+          image_repo="${{ github.repository }}"
+          # 1) 内核仓库当前可用的最新补丁版本（读 expanded_assets 页面，不受 API 限流影响）
+          need="$(curl -fsSL "https://github.com/${kernel_repo}/releases/expanded_assets/kernel_${kernel_usage}" \
+                  | grep -oP "${verpatch}\.[0-9]+(?=\.tar\.gz)" | sort -urV | head -n 1)"
+          # 2) 上次镜像构建所用的内核版本（从镜像 Release 资产名解析，排除 -trunk_ 基础镜像）
+          have="$(curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" \
+                  "https://api.github.com/repos/${image_repo}/releases?per_page=10" \
+                  | grep -oP 'Armbian_[^"]*\.img\.gz' | grep -v -- '-trunk_' \
+                  | grep -oP "${verpatch}\.[0-9]+" | sort -urV | head -n 1)"
+          echo "内核仓库最新: [ ${need:-无} ] | 上次镜像内核: [ ${have:-无} ]"
+          if [[ -z "${need}" ]]; then
+            echo "内核仓库里没有 ${verpatch}.x，跳过镜像编译。"
+            echo "build=false" >> "${GITHUB_OUTPUT}"
+          elif [[ "${need}" == "${have}" ]]; then
+            echo "已是最新内核 ${have}，跳过镜像编译。"
+            echo "build=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "检测到新内核：${have:-无} → ${need}，开始镜像编译。"
+            echo "build=true" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "kernel=${need}" >> "${GITHUB_OUTPUT}"
   setup:
+    needs: check
+    if: ${{ needs.check.outputs.build == 'true' }}
     runs-on: ubuntu-24.04-arm
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -348,17 +397,17 @@ jobs:
       - name: Set build matrix based on set_release input
         id: set-matrix
         run: |
-          if [[ "${{ inputs.set_release }}" == "all" ]]; then
+          if [[ "${{ inputs.set_release || 'bookworm' }}" == "all" ]]; then
             MATRIX='{"include":[{"release":"trixie"},{"release":"bookworm"},{"release":"resolute"},{"release":"noble"}]}'
           else
-            MATRIX='{"include":[{"release":"${{ inputs.set_release }}"}]}'
+            MATRIX='{"include":[{"release":"${{ inputs.set_release || 'bookworm' }}"}]}'
           fi
           echo "matrix=${MATRIX}" >> "${GITHUB_OUTPUT}"
 
   build:
     needs: setup
     runs-on: ubuntu-24.04-arm
-    if: ${{ github.event.repository.owner.id == github.event.sender.id }}
+    if: ${{ github.event_name == 'schedule' || github.event.repository.owner.id == github.event.sender.id }}
     permissions:
       contents: write
 
@@ -477,7 +526,7 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
 
           # Set the board name for the base Armbian image
-          config_board="${{ inputs.config_board }}"
+          config_board="${{ inputs.config_board || 'odroidn2' }}"
           [[ -z "${config_board}" ]] && config_board="odroidn2"
 
           # Compile options reference: https://docs.armbian.com/Developer-Guide_Build-Options
@@ -505,7 +554,7 @@ jobs:
 
           # Display disk usage after cleanup
           df -hT ${PWD}
-          echo "build_tag=Armbian_${{ matrix.release }}_arm64_${{ inputs.armbian_edition }}_$(date +"%Y.%m")" >> ${GITHUB_ENV}
+          echo "build_tag=Armbian_${{ matrix.release }}_arm64_${{ inputs.armbian_edition || 'server' }}_$(date +"%Y.%m")" >> ${GITHUB_ENV}
           echo "status=success" >> ${GITHUB_OUTPUT}
 
       - name: Upload Armbian image to Release
@@ -526,13 +575,13 @@ jobs:
         with:
           build_target: armbian
           armbian_path: build/output/images/*.img.gz
-          armbian_board: ${{ inputs.armbian_board }}
-          armbian_kernel: ${{ inputs.armbian_kernel }}
+          armbian_board: ${{ inputs.armbian_board || 's905x3-hk1' }}
+          armbian_kernel: ${{ inputs.armbian_kernel || '6.18.y' }}
           auto_kernel: true
-          kernel_repo: ${{ inputs.kernel_repo }}
-          kernel_usage: ${{ inputs.kernel_usage }}
-          armbian_fstype: ${{ inputs.armbian_fstype }}
-          builder_name: ${{ inputs.builder_name }}
+          kernel_repo: ${{ inputs.kernel_repo || 'Woloong-DS/Woloong-kernel' }}
+          kernel_usage: ${{ inputs.kernel_usage || 'stable' }}
+          armbian_fstype: ${{ inputs.armbian_fstype || 'ext4' }}
+          builder_name: ${{ inputs.builder_name || 'woloong' }}
 
       - name: Upload rebuilt images to Release
         uses: ophub/upload-to-releases@main
