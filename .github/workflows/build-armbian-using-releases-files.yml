@@ -424,7 +424,18 @@ jobs:
           armbian_buildpath="build/output/images"
           [[ -d "${armbian_buildpath}" ]] || mkdir -p "${armbian_buildpath}"
           ln -sf /builder/build ${{ github.workspace }}/build
-          ln -sf /builder/build /home/runner/work/_actions/ophub/amlogic-s9xxx-armbian/main/build
+          # 把 action 检出目录里的 build 也软链到虚拟盘（动态定位，兼容 uses: 指向本仓库的情况）
+          action_ref_dir="$(ls -d /home/runner/work/_actions/${{ github.repository }}/*/ 2>/dev/null | head -n 1 || true)"
+          if [[ -z "${action_ref_dir}" ]]; then
+            action_ref_dir="$(ls -d /home/runner/work/_actions/*/amlogic-s9xxx-armbian/*/ 2>/dev/null | head -n 1 || true)"
+          fi
+          if [[ -z "${action_ref_dir}" ]]; then
+            echo "::error::未找到 action 检出目录（/home/runner/work/_actions），无法为 rebuild 建立 build 软链"
+            ls -d /home/runner/work/_actions/* 2>/dev/null || true
+            exit 1
+          fi
+          ln -sfn /builder/build "${action_ref_dir}build"
+          echo "action 侧软链: ${action_ref_dir}build -> /builder/build"
 
           # Query the latest release asset via GitHub API
           latest_version=$(curl -s \
