@@ -279,7 +279,7 @@ tolog "59. Disable the ssh.socket and enable ssh.service"
             -e "s|^BOOT_SOC=.*|BOOT_SOC=\"${soc_name}\"|g" \
             -e "s|^BOARDFAMILY=.*|BOARDFAMILY=\"${family_name}\"|g" \
             -e "s|^LINUXFAMILY=.*|LINUXFAMILY=\"${platform_name}\"|g" \
-            -e "s|^VENDOR=.*|VENDOR=\"Armbian OS\"|g" \
+            -e "s|^VENDOR=.*|VENDOR=\"Woloong OS\"|g" \
             -e "s|^IMAGE_TYPE=.*|IMAGE_TYPE=rebuild|g" \
             -e "s|^BOARD_TYPE=.*|BOARD_TYPE=diy|g" \
             -e "s|^FORCE_BOOTSCRIPT_UPDATE=.*|FORCE_BOOTSCRIPT_UPDATE=\"no\"|g" \
@@ -309,8 +309,8 @@ tolog "59. Disable the ssh.socket and enable ssh.service"
         sed -i \
             -e "s|^BOARDFAMILY=.*|BOARDFAMILY=\"${family_name}\"|g" \
             -e "s|^LINUXFAMILY=.*|LINUXFAMILY=\"${platform_name}\"|g" \
-            -e "s|^VENDOR=.*|VENDOR=\"Armbian OS\"|g" \
-            -e "s|^VENDORPRETTYNAME=.*|VENDORPRETTYNAME=\"Armbian OS\"|g" \
+            -e "s|^VENDOR=.*|VENDOR=\"Woloong OS\"|g" \
+            -e "s|^VENDORPRETTYNAME=.*|VENDORPRETTYNAME=\"Woloong OS\"|g" \
             -e "s|^IMAGE_TYPE=.*|IMAGE_TYPE=rebuild|g" \
             -e "s|^BOARD_TYPE=.*|BOARD_TYPE=diy|g" \
             -e "s|^FORCE_BOOTSCRIPT_UPDATE=.*|FORCE_BOOTSCRIPT_UPDATE=\"no\"|g" \

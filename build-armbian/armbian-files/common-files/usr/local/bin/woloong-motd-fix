@@ -1,12 +1,30 @@
 #!/bin/bash
-# Woloong: 保证登录 logo 文字始终是 Woloong OS（幂等，可反复执行）
+# Woloong: 品牌统一为 Woloong OS（幂等，可反复执行）
+# 修复范围：MOTD 开关文件 + 系统版本信息文件（armbian-fix 首次启动会改回 Armbian OS）
 set +e
+brand="Woloong OS"
+
+# 1) MOTD logo 文字来源
 motd_default="/etc/default/armbian-motd"
-grep -q '^VENDOR="Woloong OS"$' "${motd_default}" 2>/dev/null && exit 0
-if [[ -f "${motd_default}" ]]; then
-    sed -i '/^VENDOR=/d' "${motd_default}" 2>/dev/null
-    echo 'VENDOR="Woloong OS"' >>"${motd_default}"
-else
-    printf '%s\n' 'VENDOR="Woloong OS"' >"${motd_default}"
+if ! grep -q "^VENDOR=\"${brand}\"$" "${motd_default}" 2>/dev/null; then
+    if [[ -f "${motd_default}" ]]; then
+        sed -i '/^VENDOR=/d' "${motd_default}" 2>/dev/null
+        echo "VENDOR=\"${brand}\"" >>"${motd_default}"
+    else
+        printf '%s\n' "VENDOR=\"${brand}\"" >"${motd_default}"
+    fi
 fi
+
+# 2) /etc/armbian-release 与 /etc/armbian-image-release
+for f in /etc/armbian-release /etc/armbian-image-release; do
+    [[ -f "${f}" ]] || continue
+    if ! grep -q "^VENDOR=\"${brand}\"$" "${f}" 2>/dev/null; then
+        sed -i "s|^VENDOR=.*|VENDOR=\"${brand}\"|g" "${f}" 2>/dev/null
+        grep -q '^VENDOR=' "${f}" 2>/dev/null || echo "VENDOR=\"${brand}\"" >>"${f}"
+    fi
+    if ! grep -q "^VENDORPRETTYNAME=\"${brand}\"$" "${f}" 2>/dev/null; then
+        sed -i '/^VENDORPRETTYNAME=/d' "${f}" 2>/dev/null
+        echo "VENDORPRETTYNAME=\"${brand}\"" >>"${f}"
+    fi
+done
 exit 0
