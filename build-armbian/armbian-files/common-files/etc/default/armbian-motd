@@ -1,0 +1,9 @@
+# /etc/default/armbian-motd —— Woloong 自定义覆盖文件
+# Armbian 的 /etc/update-motd.d/10-armbian-header 会先算出 VENDOR，再 source 本文件，
+# 最后用 figlet -f small " ${VENDOR}" 打印官方形式的 logo。
+# 因此在这里覆盖 VENDOR，即可把 logo 文字换成 Woloong OS，而形式/颜色保持官方原样。
+
+VENDOR="Woloong OS"
+
+# 与 ophub rebuild 脚本对该文件的默认处理保持一致
+MOTD_DISABLE="tips"

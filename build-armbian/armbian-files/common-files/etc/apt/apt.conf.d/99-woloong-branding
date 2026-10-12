@@ -1,0 +1,2 @@
+// Woloong: dpkg/apt 结束后确保登录 logo 文字仍为 Woloong OS
+DPkg::Post-Invoke { "[ -f /usr/local/bin/woloong-motd-fix ] && bash /usr/local/bin/woloong-motd-fix || true"; };

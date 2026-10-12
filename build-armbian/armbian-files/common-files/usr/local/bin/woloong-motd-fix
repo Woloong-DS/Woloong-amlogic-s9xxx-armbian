@@ -1,0 +1,12 @@
+#!/bin/bash
+# Woloong: 保证登录 logo 文字始终是 Woloong OS（幂等，可反复执行）
+set +e
+motd_default="/etc/default/armbian-motd"
+grep -q '^VENDOR="Woloong OS"$' "${motd_default}" 2>/dev/null && exit 0
+if [[ -f "${motd_default}" ]]; then
+    sed -i '/^VENDOR=/d' "${motd_default}" 2>/dev/null
+    echo 'VENDOR="Woloong OS"' >>"${motd_default}"
+else
+    printf '%s\n' 'VENDOR="Woloong OS"' >"${motd_default}"
+fi
+exit 0

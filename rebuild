@@ -1135,11 +1135,15 @@ refactor_rootfs() {
             -e "s|^BOOT_SOC=.*|BOOT_SOC=\"${SOC}\"|g" \
             -e "s|^IMAGE_TYPE=.*|IMAGE_TYPE=rebuild|g" \
             -e "s|^BOARD_TYPE=.*|BOARD_TYPE=diy|g" \
-            -e "s|^VENDOR=.*|VENDOR=\"Armbian OS\"|g" \
+            -e "s|^VENDOR=.*|VENDOR=\"Woloong OS\"|g" \
             -e "s|^FORCE_BOOTSCRIPT_UPDATE=.*|FORCE_BOOTSCRIPT_UPDATE=\"no\"|g" \
             -e "s|^BOOTSCRIPT_FORCE_UPDATE=.*|FORCE_BOOTSCRIPT_UPDATE=\"no\"|g" \
             -e "s|^FORCE_UBOOT_UPDATE=.*|FORCE_UBOOT_UPDATE=\"no\"|g" \
             "${armbian_release_file}"
+
+    # Woloong: VENDORPRETTYNAME 优先级最高，MOTD 一定用它作为 logo 文字
+    sed -i '/^VENDORPRETTYNAME=/d' "${armbian_release_file}"
+    echo 'VENDORPRETTYNAME="Woloong OS"' >> "${armbian_release_file}"
     }
 
     # Add custom startup script

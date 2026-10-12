@@ -286,6 +286,12 @@ todo_rootfs_resize="/root/.no_rootfs_resize"
     log_message "Root partition resize completed."
 }
 
+# For Woloong custom MOTD logo (re-apply the vendor name after system upgrades)
+if [[ -f "/usr/local/bin/woloong-motd-fix" ]]; then
+    bash /usr/local/bin/woloong-motd-fix >/dev/null 2>&1
+    log_message "Woloong MOTD vendor ensured."
+fi
+
 # Finalization
 log_message "All custom services have been processed successfully."
 trap '' HUP INT QUIT TERM PIPE
