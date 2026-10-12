@@ -879,8 +879,16 @@ copy_files() {
     # Copy the full Armbian image
     cp -af ${tmp_armbian}/. ${tag_rootfs}
 
-    # Copy the common files
-    [[ -d "${common_files}" ]] && cp -af --no-preserve=ownership ${common_files}/. ${tag_rootfs}
+    # Copy the common files（Woloong: 输出日志，便于确认 overlay 是否注入）
+    if [[ -d "${common_files}" ]]; then
+        echo -e "${INFO} Copy the common files: [ ${common_files} ]"
+        if [[ -f "${common_files}/etc/default/armbian-motd" ]]; then
+            echo -e "${INFO} Woloong overlay: [ $(grep '^VENDOR=' "${common_files}/etc/default/armbian-motd" 2>/dev/null) ]"
+        else
+            echo -e "${ERROR} Woloong overlay NOT FOUND in [ ${common_files} ]"
+        fi
+        cp -af --no-preserve=ownership ${common_files}/. ${tag_rootfs}
+    fi
 
     # Copy the platform files
     platform_bootfs="${platform_files}/${PLATFORM}/bootfs"

@@ -371,6 +371,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Verify Woloong overlay in action checkout  # 早期校验：缺 overlay 立即失败，避免白跑编译
+        run: |
+          set -o pipefail
+          action_dir="$(ls -d /home/runner/work/_actions/${{ github.repository }}/*/ 2>/dev/null | head -n 1 || true)"
+          if [[ -z "${action_dir}" ]]; then
+            action_dir="$(ls -d /home/runner/work/_actions/*/amlogic-s9xxx-armbian/*/ 2>/dev/null | head -n 1 || true)"
+          fi
+          if [[ -z "${action_dir}" ]]; then
+            echo "::warning::action 目录尚未就绪，跳过 overlay 校验（不影响构建）。"
+            exit 0
+          fi
+          echo "action 目录: ${action_dir}"
+          missing=0
+          for rel in \
+            "build-armbian/armbian-files/common-files/etc/default/armbian-motd" \
+            "build-armbian/armbian-files/common-files/etc/apt/apt.conf.d/99-woloong-branding" \
+            "build-armbian/armbian-files/common-files/usr/local/bin/woloong-motd-fix" ; do
+            if [[ -f "${action_dir}${rel}" ]]; then
+              echo "OK   ${rel}"
+            else
+              echo "::error::action 仓库中缺少 ${rel}"
+              missing=$((missing + 1))
+            fi
+          done
+          if [[ -f "${action_dir}build-armbian/armbian-files/common-files/etc/default/armbian-motd" ]]; then
+            echo "overlay: $(grep '^VENDOR=' "${action_dir}build-armbian/armbian-files/common-files/etc/default/armbian-motd" 2>/dev/null)"
+          fi
+          [[ "${missing}" -eq 0 ]] || exit 1
+
       - name: Initialize the build environment
         id: init
         env:
