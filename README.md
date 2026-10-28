@@ -1,15 +1,40 @@
-# Woloong Amlogic S9xxx Armbian
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Woloong-DS/Woloong-kiauh/main/docs/assets/Woloong_Logo.png" alt="Woloong" height="88">
+</p>
 
-[中文说明](README.md) | [English](README.en.md) | 上游项目：[ophub/amlogic-s9xxx-armbian](https://github.com/ophub/amlogic-s9xxx-armbian)
+<h1 align="center">Woloong Amlogic S9xxx Armbian</h1>
+
+<p align="center">
+  <b>Woloong OS 的基础镜像 · HK1-BOX / S905x3</b><br>
+  fork 自 ophub/amlogic-s9xxx-armbian · 品牌 Woloong OS · 内置 Woloong 内核
+</p>
+
+<p align="center">
+  <a href="https://github.com/Woloong-DS/Woloong-OS">Woloong-OS</a> ·
+  <a href="https://github.com/Woloong-DS/Woloong-kernel">Woloong-kernel</a> ·
+  <a href="https://github.com/ophub/amlogic-s9xxx-armbian">上游 ophub/amlogic-s9xxx-armbian</a> ·
+  <a href="README.en.md">English</a>
+</p>
+
+---
+
+## 这是什么
 
 本仓库用于构建 **Woloong OS** 的 Armbian 系统镜像（面向 Amlogic S905x3 / HK1-BOX 等电视盒子），fork 自 [ophub/amlogic-s9xxx-armbian](https://github.com/ophub/amlogic-s9xxx-armbian)。
+镜像只提供“可启动的底座”，产品软件栈由 [Woloong-OS](https://github.com/Woloong-DS/Woloong-OS) 以离线包形式置备。
 
-- **品牌**：登录 MOTD 大字 logo 为 `Woloong OS`，系统信息中的 `VENDOR` / `VENDORPRETTYNAME` 同样为 `Woloong OS`（保留 Armbian 官方 logo 形态，只改文字）。
-- **内核**：来自自建内核仓库 [Woloong-DS/Woloong-kernel](https://github.com/Woloong-DS/Woloong-kernel)，版本形如 `6.18.55-Woloong`，内置 Klipper / CAN 所需驱动。
-- **节奏**：每月 8 日、23 日（UTC 20:00）自动构建镜像，与内核构建（1 日、16 日）**错开半个月**，这样每次构建都能用上刚发布的新内核。
+## 在 Woloong 栈中的位置
+
+| 层 | 仓库 | 职责 |
+|---|---|---|
+| 内核 | [Woloong-kernel](https://github.com/Woloong-DS/Woloong-kernel) | 内核配置、驱动、`-Woloong` 签名 |
+| 基础镜像 | **Woloong-amlogic-s9xxx-armbian**（本仓库） | 在 Armbian 基础上产出可启动镜像 |
+| 产品层 | [Woloong-OS](https://github.com/Woloong-DS/Woloong-OS) | 离线包、软件栈、置备与验收 |
+| 运行时 | [Woloong-kiauh](https://github.com/Woloong-DS/Woloong-kiauh) | 安装/卸载/更新/体检 |
 
 ## 目录
 
+- [在 Woloong 栈中的位置](#在-woloong-栈中的位置)
 - [定制清单](#定制清单)
 - [品牌是怎么生效的](#品牌是怎么生效的)
 - [自动化构建](#自动化构建)
