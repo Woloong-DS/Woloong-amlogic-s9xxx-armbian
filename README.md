@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Woloong-DS/Woloong-kiauh/main/docs/assets/Woloong_Logo.png" alt="Woloong" height="88">
+  <img src="docs/assets/Woloong_Logo.png" alt="Woloong" height="88">
 </p>
 
 <h1 align="center">Woloong Amlogic S9xxx Armbian</h1>
